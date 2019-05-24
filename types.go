@@ -1,7 +1,6 @@
 package types
 
 import (
-	"database/sql/driver"
 	"encoding/json"
 	"errors"
 )
@@ -49,14 +48,6 @@ func (ns *NullString) Scan(value interface{}) error {
 	}
 	ns.String, ns.Valid = value.(string)
 	return nil
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullString) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return ns.String, nil
 }
 
 var errLeadingInt = errors.New("types: bad [0-9]*") // never printed

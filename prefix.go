@@ -1,14 +1,11 @@
 package types
 
 import (
-	"database/sql/driver"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/kevinburke/go.uuid"
-	"gopkg.in/mgo.v2/bson"
 )
 
 // A PrefixUUID stores an additional prefix as part of a UUID type.
@@ -88,43 +85,6 @@ func (pu *PrefixUUID) Scan(value interface{}) error {
 		*pu, err = NewPrefixUUID(t)
 	default:
 		return fmt.Errorf("types: can't scan value of unknown type %v into a PrefixUUID", value)
-	}
-	return err
-}
-
-// Value implements the driver.Valuer interface.
-func (pu PrefixUUID) Value() (driver.Value, error) {
-	// In theory we should be able to send 16 raw bytes to the database
-	// and have it encoded as a UUID. However, this requires enabling
-	// binary_parameters=yes on the connection string. Instead of that, just
-	// pass a string to the database, which is easy to handle.
-	return pu.UUID.String(), nil
-}
-
-// GetBSON implements the mgo.Getter interface.
-func (pu PrefixUUID) GetBSON() (interface{}, error) {
-	return bson.Binary{
-		Kind: 0x03,
-		Data: pu.UUID[:],
-	}, nil
-}
-
-// SetBSON implements the mgo.Setter interface.
-func (pu *PrefixUUID) SetBSON(raw bson.Raw) error {
-	// first 4 bytes are int32 LE length
-	if len(raw.Data) < 4 {
-		return fmt.Errorf("invalid BSON data: too short")
-	}
-	l := binary.LittleEndian.Uint32(raw.Data[:4])
-	var err error
-	if l >= 32 {
-		// null terminated, so subtract 1
-		d := string(raw.Data[4 : len(raw.Data)-1])
-		*pu, err = NewPrefixUUID(d)
-	} else {
-		var u uuid.UUID
-		u, err = uuid.FromBytes(raw.Data[4:])
-		pu.UUID = u
 	}
 	return err
 }

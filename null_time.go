@@ -1,7 +1,6 @@
 package types
 
 import (
-	"database/sql/driver"
 	"encoding/json"
 	"time"
 )
@@ -49,12 +48,4 @@ func (nt NullTime) MarshalJSON() ([]byte, error) {
 func (nt *NullTime) Scan(value interface{}) error {
 	nt.Time, nt.Valid = value.(time.Time)
 	return nil
-}
-
-// Value implements the driver Valuer interface.
-func (nt NullTime) Value() (driver.Value, error) {
-	if !nt.Valid {
-		return nil, nil
-	}
-	return nt.Time, nil
 }
